@@ -3,13 +3,12 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 def scrape_latest_funding_table():
-    # --- STEP 1: Get the Latest Article Link ---
     base_url = "https://startuptalky.com/tag/indian-startup-funding/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
-    print(f"📡 Connecting to Main Feed: {base_url}...")
+    print(f" Connecting to Main Feed: {base_url}...")
     try:
         response = requests.get(base_url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, "html.parser")
@@ -25,13 +24,13 @@ def scrape_latest_funding_table():
             return
             
         article_url = f"https://startuptalky.com{link_tag['href']}"
-        print(f"✅ found latest article: {article_url}")
+        print(f" found latest article: {article_url}")
 
     except Exception as e:
         print(f"error: {e}")
         return
 
-    print(f"\n🚀 Fetching Table Data from article...")
+    print(f"\n Fetching Table Data from article...")
     try:
         article_response = requests.get(article_url, headers=headers, timeout=10)
         article_soup = BeautifulSoup(article_response.text, "html.parser")
@@ -44,7 +43,7 @@ def scrape_latest_funding_table():
             target_table = article_soup.find("table")
 
         if not target_table:
-            print("⚠️ No table found in this article.")
+            print(" No table found in this article.")
             return
 
         rows = target_table.find_all("tr")
@@ -70,7 +69,7 @@ def scrape_latest_funding_table():
             df.to_csv(filename, index=False)
             print(f"\nsaved to {filename}")
         else:
-            print("⚠️ table found but it was empty.")
+            print(" table found but it was empty.")
 
     except Exception as e:
         print(f"error: {e}")

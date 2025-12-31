@@ -1,6 +1,7 @@
 import feedparser
 from datetime import date, timedelta
 import html
+import file_saver
 
 def scrape_google_news():
     url = "https://news.google.com/rss/search?q=startup+raised+funding+series&hl=en-IN&gl=IN&ceid=IN:en"
@@ -11,10 +12,12 @@ def scrape_google_news():
 
     today = date.today()
 
-    prev_days = 3
+    prev_days = 1
     start_date = today - timedelta(days=prev_days)
 
     print(f"showing news from: {start_date} to {today}\n")
+
+    file_save = []
 
     for entry in feed.entries:
         if hasattr(entry, 'published_parsed') and entry.published_parsed:
@@ -33,6 +36,17 @@ def scrape_google_news():
             print(f"[{article_date}] {clean_title}")
             print(f"Link: {link}")
             print("-" * 50)
+
+            file_save.append({
+                'title': clean_title,
+                'link': link,
+                'date': str(article_date)
+            })
+
+    if file_save:
+        file_saver.save_common_data("Google News", file_save)
+    else:
+        print("No recent articles found.")
 
 if __name__ == "__main__":
     scrape_google_news()

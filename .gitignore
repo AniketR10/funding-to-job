@@ -27,6 +27,12 @@ node_modules/
 #venv
 venv/
 
+__pycache__/
+*.pyc
+
+*.csv
+
+
 # debug
 npm-debug.log*
 yarn-debug.log*

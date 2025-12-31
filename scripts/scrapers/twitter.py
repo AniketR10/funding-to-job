@@ -1,9 +1,10 @@
 import http.client
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+import file_saver
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
@@ -26,7 +27,8 @@ data = res.read()
 json_data = json.loads(data)
 
 today = datetime.now(timezone.utc).date()
-print(f"today's date: {today}")
+prev_days = 1
+start_date = today - timedelta(days=prev_days)
 
 
 # print(type(json_data))
@@ -41,13 +43,18 @@ for tweet in json_data["results"]:
         "%a %b %d %H:%M:%S %z %Y"
     ).date()
 
-    if tweet_date == today:
+    if tweet_date == start_date:
         tweets.append({
             "date": tweet.get("creation_date"),
 
-            "text": tweet.get("text"),
+            "title": tweet.get("text"),
             "link": tweet.get("expanded_url")
         })
 
+if tweets:
+    print(f" Found {len(tweets)} tweets.")
+    file_saver.save_common_data("Twitter (StartupReport)", tweets)
+else:
+    print(f"No tweets found for {start_date}.")
 
 print(tweets)

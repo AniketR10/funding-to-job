@@ -1,15 +1,19 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import date
+from datetime import date, timedelta
 from dateutil import parser
 import time
+import file_saver
 
 def scrape_saas_news_pagination():
     base_url = "https://www.thesaasnews.com"
     today = date.today()
+    prev_days = 1
+    start_date = today - timedelta(days=prev_days)
+    file_save = []
+
     
     print(f" starting Multi-Page Scraper...")
-    print(f" filter Date: {today}\n")
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -58,13 +62,19 @@ def scrape_saas_news_pagination():
                         date_str = date_tag.get_text(strip=True)
                         article_date = parser.parse(date_str).date()
                         
-                        if article_date == today:
+                        if article_date == start_date:
                             print(f"    FOUND: {title}")
                             print(f"      Desc: {description[:80]}...")
                             print(f"      Link: {full_link}")
+
+                            file_save.append({
+                                "title": title,
+                                "link": full_link,
+                                "date": str(start_date)
+                            })
                             total_found += 1
                         
-                        elif article_date < today:
+                        elif article_date < start_date:
 
                             print(f"\n found older article ({article_date}). Stopping scraper.")
                             keep_scraping = False
@@ -84,7 +94,11 @@ def scrape_saas_news_pagination():
             print(f" error on Page {page_num}: {e}")
             break
 
-    print(f"\n Done! Total articles found for today: {total_found}")
+    if file_save:
+        print(f" Saving {len(file_save)} articles...")
+        file_saver.save_common_data("The SaaS News", file_save)
+    else:
+        print(" No articles found for the target date.")
 
 if __name__ == "__main__":
     scrape_saas_news_pagination()

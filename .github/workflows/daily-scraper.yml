@@ -28,5 +28,6 @@ jobs:
                env:
                  NEXT_PUBLIC_SUPABASE_URL: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
                  SUPABASE_SERVICE_KEY: ${{secrets.SUPABASE_SERVICE_KEY}}
+                 GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
                
                run: npx tsx src/lib/runScripts.ts

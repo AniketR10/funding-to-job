@@ -26,8 +26,21 @@ jobs:
 
              - name: Run All Scripts
                env:
-                 NEXT_PUBLIC_SUPABASE_URL: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
-                 SUPABASE_SERVICE_KEY: ${{secrets.SUPABASE_SERVICE_KEY}}
-                 GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+                NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+                SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+                SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+                SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+                NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+                
+                GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+                OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+                GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+                OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+                REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+                REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+                REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+
+                X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
                
                run: npx tsx src/lib/runScripts.ts

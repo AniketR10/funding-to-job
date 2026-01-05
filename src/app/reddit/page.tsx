@@ -9,17 +9,26 @@ import Footer from '@/src/components/Footer';
 export default function RedditPage() {
   const [posts, setPosts] = useState<any[]>([]);
 
-  useEffect(() => {
-    supabase.from('reddit_posts').select('*').order('created_at', { ascending: false }).limit(20)
-      .then(({ data }) => { if (data) setPosts(data); });
+ useEffect(() => {
+    // 1. Define the fetch function
+    const fetchPosts = () => {
+      supabase.from('redditjobs') // <--- Make sure this matches your scraper table name!
+        .select('*')
+        .order('timestamp', { ascending: false }) // Sort by the actual Reddit timestamp
+        .limit(20)
+        .then(({ data }) => { 
+          if (data) setPosts(data); 
+        });
+    };
 
-    const channel = supabase.channel('reddit-updates')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reddit_posts' }, (payload) => {
-          setPosts((prev) => [payload.new, ...prev]);
-      })
-      .subscribe();
+    // 2. Fetch immediately when the page loads
+    fetchPosts();
 
-    return () => { supabase.removeChannel(channel); };
+    // 3. Set up the Polling (Runs every 30 seconds)
+    const interval = setInterval(fetchPosts, 60000);
+
+    // 4. Cleanup when the user leaves the page
+    return () => clearInterval(interval);
   }, []);
 
   return (

@@ -1,12 +1,10 @@
 import praw
-import time
 import os
 from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
 from supabase import create_client, Client
 
-# --- 1. Setup & Auth ---
 script_dir = Path(__file__).resolve().parent
 env_path = script_dir.parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -21,38 +19,37 @@ reddit = praw.Reddit(
     user_agent=os.getenv("REDDIT_USER_AGENT"),
 )
 
-# --- 2. Configuration ---
 subreddits = ["jobs", "forhire", "RemoteJobs", "startup", "Entrepreneur"]
 keywords = ["hiring", "internship", "opening", "remote", "looking for"]
-
 subreddit = reddit.subreddit("+".join(subreddits))
-print("🚀 Stream started... Only saving: timestamp, subreddit, title, url")
 
-# --- 3. The Stream Loop ---
-for submission in subreddit.stream.submissions(skip_existing=True, pause_after=-1):
-    if submission is None:
-        continue
+def run_job_scraper():
+    print(f"🚀 Fetching latest posts from: {subreddits}")
+    
 
-    # Filter by keywords
-    if not any(k in submission.title.lower() for k in keywords):
-        continue
-
-    # --- 4. Prepare EXACTLY the data you requested ---
-    data_payload = {
-        "timestamp": datetime.fromtimestamp(submission.created_utc).isoformat(),
-        "subreddit": submission.subreddit.display_name,
-        "title": submission.title.replace("\n", " ").strip(),
-        "url": submission.url
-    }
-
-    try:
-        # Send to Supabase
-        supabase.table("redditjobs").upsert(
-            data_payload, 
-            on_conflict="url" 
-        ).execute()
+    for submission in subreddit.new(limit=100):
         
-        print(f"✅ Saved: {data_payload['title'][:40]}...")
+        if not any(k in submission.title.lower() for k in keywords):
+            continue
 
-    except Exception as e:
-        print(f"❌ DB Error: {e}")
+
+        data_payload = {
+            "timestamp": datetime.fromtimestamp(submission.created_utc).isoformat(),
+            "subreddit": submission.subreddit.display_name,
+            "title": submission.title.replace("\n", " ").strip(),
+            "url": submission.url
+        }
+
+        try:
+            supabase.table("redditjobs").upsert(
+                data_payload, 
+                on_conflict="url" 
+            ).execute()
+            
+        except Exception as e:
+            print(f"❌ DB Error: {e}")
+
+    print("✅ Sync complete. Script finished.")
+
+if __name__ == "__main__":
+    run_job_scraper()

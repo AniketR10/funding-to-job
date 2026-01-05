@@ -24,7 +24,7 @@ keywords = ["hiring", "internship", "opening", "remote", "looking for"]
 subreddit = reddit.subreddit("+".join(subreddits))
 
 def run_job_scraper():
-    print(f"🚀 Fetching latest posts from: {subreddits}")
+    print(f"Fetching latest posts from: {subreddits}")
     
 
     for submission in subreddit.new(limit=100):

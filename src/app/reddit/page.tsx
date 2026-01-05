@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import Navbar from '@/src/components/Navbar';
 import { Zap, Clock } from 'lucide-react';
 import { supabase } from '@/src/lib/supabase';
@@ -9,25 +8,19 @@ import Footer from '@/src/components/Footer';
 export default function RedditPage() {
   const [posts, setPosts] = useState<any[]>([]);
 
- useEffect(() => {
-    // 1. Define the fetch function
+  useEffect(() => {
     const fetchPosts = () => {
-      supabase.from('redditjobs') // <--- Make sure this matches your scraper table name!
+      supabase.from('redditjobs')
         .select('*')
-        .order('timestamp', { ascending: false }) // Sort by the actual Reddit timestamp
+        .order('timestamp', { ascending: false }) 
         .limit(20)
         .then(({ data }) => { 
           if (data) setPosts(data); 
         });
     };
 
-    // 2. Fetch immediately when the page loads
     fetchPosts();
-
-    // 3. Set up the Polling (Runs every 30 seconds)
     const interval = setInterval(fetchPosts, 60000);
-
-    // 4. Cleanup when the user leaves the page
     return () => clearInterval(interval);
   }, []);
 
@@ -55,17 +48,23 @@ export default function RedditPage() {
                      r/{post.subreddit}
                    </span>
                    <h3 className="text-base font-bold leading-tight mb-2 hover:text-blue-600 transition">
-                     <a href={post.url} target="_blank">{post.title}</a>
+                     <a href={post.url} target="_blank" rel="noopener noreferrer">{post.title}</a>
                    </h3>
                 </div>
+
                 <div className="min-w-fit flex items-center text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 border-2 border-gray-900 rounded shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
                    <Clock size={12} className="mr-1" />
-                   {new Date(post.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                   {new Date(post.timestamp).toLocaleString([], {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute:'2-digit'
+                   })}
                 </div>
               </div>
               
               <div className="mt-3 flex justify-end">
-                <a href={post.url} target="_blank" className="bg-gray-900 text-white px-4 py-2 text-xs font-bold rounded border-2 border-gray-900 hover:bg-gray-700 transition flex items-center gap-2">
+                <a href={post.url} target="_blank" rel="noopener noreferrer" className="bg-gray-900 text-white px-4 py-2 text-xs font-bold rounded border-2 border-gray-900 hover:bg-gray-700 transition flex items-center gap-2">
                    Apply on Reddit <Zap size={12} className="text-yellow-400" />
                 </a>
               </div>

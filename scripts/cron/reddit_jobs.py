@@ -19,8 +19,8 @@ reddit = praw.Reddit(
     user_agent=os.getenv("REDDIT_USER_AGENT"),
 )
 
-subreddits = ["jobs", "forhire", "RemoteJobs", "startup", "Entrepreneur"]
-keywords = ["hiring", "internship", "opening", "remote", "looking for"]
+subreddits = ["jobs", "forhire", "RemoteJobs", "startup", "Entrepreneur", "WebDeveloperJobs", "DeveloperJobs", "StartupIndia"]
+keywords = ["hiring", "internship", "opening", "remote", "looking for", "job alert"]
 subreddit = reddit.subreddit("+".join(subreddits))
 
 def run_job_scraper():

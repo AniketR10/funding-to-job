@@ -44,12 +44,12 @@ export default async function Home() {
         </h1>
         
         <p className="text-lg md:text-xl font-medium text-gray-700 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Are you tired of Applying for Jobs and getting Ghosted? Access our latest Funded Startups and their Founders socials
+          Are you tired of Applying for Jobs and getting Ghosted? Access our latest Funded Startups, their Founders socials
           and say,
             <br />
            "Sir, please give me Job!" 
           <br />
-          Track YC Founders, and find real-time developer jobs posts from Reddit.
+          Track YC Founders, and find real-time jobs posts from Reddit.
         </p>
 
         <div className="mb-24 relative inline-block">

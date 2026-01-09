@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from 'react-dom'
 import { adminLogin } from '../action/admin'
 import { Lock } from 'lucide-react'
+import { useActionState } from 'react'
 
 const initialState = {
   error: '',
@@ -23,7 +24,7 @@ function SubmitButton() {
 
 export default function AdminLogin() {
 
-  const [state, formAction] = useFormState(adminLogin, initialState)
+  const [state, formAction] = useActionState(adminLogin, initialState)
 
   return (
     <div className="min-h-screen bg-[#F8F3E7] flex items-center justify-center p-4">

@@ -2,7 +2,7 @@ name: Daily Script Runner
 
 on:
     schedule:
-        - cron: '0 0 * * *'
+        - cron: '35 18 * * *'
     workflow_dispatch: 
 
 jobs: 
@@ -47,5 +47,6 @@ jobs:
                 REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
                 REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
                 X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
+                LLM_MODEL: ${{ secrets.LLM_MODEL }}
                
                run: npx tsx src/lib/runScripts.ts

@@ -1,14 +1,23 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Navbar from '@/src/components/Navbar';
-import { ExternalLink, DollarSign, Users, Calendar, Filter } from 'lucide-react';
+import { ExternalLink, DollarSign, Users, Calendar, Filter, Loader2, ArrowDownCircle } from 'lucide-react';
 import { supabase } from '@/src/lib/supabase';
 import Footer from '@/src/components/Footer';
+
+const ITEMS_PER_PAGE = 20;
 
 export default function StartupsPage() {
   const [startups, setStartups] = useState<any[]>([]);
   const [dateFilter, setDateFilter] = useState('all');
   const [roundFilter, setRoundFilter] = useState('all');
+
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  const [availableRounds, setAvailableRounds] = useState<string[]>([]);
 
   const getHost = (url: string) => {
     try {
@@ -17,12 +26,6 @@ export default function StartupsPage() {
       return url;
     }
   }
-
-  useEffect(() => {
-    supabase.from('startups').select('*').order('announced_date', {ascending: false}).limit(100).then(({ data }) => {
-      if (data) setStartups(data);
-    });
-  }, []);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -33,34 +36,88 @@ export default function StartupsPage() {
     });
   };
 
-  const filteredStartups = useMemo(() => {
-    return startups.filter((startup) => {
-      let dateMatch = true;
-      if (dateFilter !== 'all' && startup.announced_date) {
-        const announced = new Date(startup.announced_date);
+  useEffect(() => {
+    const fetchRounds = async () => {
+      const { data } = await supabase
+        .from('startups')
+        .select('funding_round')
+        .not('funding_round', 'is', null);
+
+      if (data) {
+        const uniqueRounds = Array.from(new Set(data.map(d => d.funding_round))).sort();
+        setAvailableRounds(uniqueRounds);
+      }
+    };
+    fetchRounds();
+  }, []);
+
+  const fetchStartups = useCallback(async (pageNumber: number, isNewFilter: boolean = false) => {
+    setIsLoading(true);
+
+    try {
+      let query = supabase
+        .from('startups')
+        .select('*')
+        .order('announced_date', { ascending: false });
+
+      if (dateFilter !== 'all') {
         const now = new Date();
-        const diffTime = Math.abs(now.getTime() - announced.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        let daysToSubtract = 0;
+        
+        if (dateFilter === '1d') daysToSubtract = 2; 
+        if (dateFilter === '7d') daysToSubtract = 7;
+        if (dateFilter === '30d') daysToSubtract = 30;
 
-        if (dateFilter === '1d') dateMatch = diffDays <= 2;
-        if (dateFilter === '7d') dateMatch = diffDays <= 7;
-        if (dateFilter === '30d') dateMatch = diffDays <= 30;
+        if (daysToSubtract > 0) {
+          const pastDate = new Date();
+          pastDate.setDate(now.getDate() - daysToSubtract);
+          query = query.gte('announced_date', pastDate.toISOString());
+        }
       }
 
-      let roundMatch = true;
       if (roundFilter !== 'all') {
-        const sRound = startup.funding_round?.toLowerCase() || '';
-        roundMatch = sRound.includes(roundFilter.toLowerCase());
+        query = query.ilike('funding_round', `%${roundFilter}%`);
       }
 
-      return dateMatch && roundMatch;
-    });
-  }, [startups, dateFilter, roundFilter]);
+      const from = pageNumber * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
+      const { data, error } = await query.range(from, to);
 
-  const availableRounds = useMemo(() => {
-    const rounds = new Set(startups.map(s => s.funding_round).filter(Boolean));
-    return Array.from(rounds).sort();
-  }, [startups]);
+      if (error) throw error;
+
+      if (data) {
+        if (isNewFilter) {
+          setStartups(data);
+        } else {
+          setStartups(prev => [...prev, ...data]);
+        }
+
+        if (data.length < ITEMS_PER_PAGE) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching startups:", err);
+    } finally {
+      setIsLoading(false);
+      setInitialLoading(false);
+    }
+  }, [dateFilter, roundFilter]);
+
+  useEffect(() => {
+    setPage(0);
+    setHasMore(true);
+    fetchStartups(0, true);
+  }, [dateFilter, roundFilter, fetchStartups]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchStartups(nextPage, false);
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F3E7] font-sans text-gray-900 flex flex-col">
@@ -70,16 +127,24 @@ export default function StartupsPage() {
         <div className="mb-8 lg:ml-[8.33%] lg:w-[58.33%]">
             <h1 className="text-3xl font-black border-b-4 border-gray-900 pb-4">Startup Database</h1>
         </div>
+        
         <div className="flex flex-col-reverse lg:grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start">
+          
           <div className="lg:col-start-2 lg:col-span-7 space-y-6">
             
-            {filteredStartups.length === 0 && (
+            {initialLoading && (
+               <div className="p-12 flex justify-center text-gray-500">
+                  <Loader2 className="animate-spin" size={32} />
+               </div>
+            )}
+
+            {!initialLoading && startups.length === 0 && (
               <div className="p-8 text-center text-gray-500 font-bold border-2 border-dashed border-gray-300 rounded-lg">
                 No startups match your filters.
               </div>
             )}
 
-            {filteredStartups.map((startup) => {
+            {startups.map((startup) => {
               const validFounders = startup.founder_socials?.filter((f: any) => 
                   f.name && f.name !== 'null' && f.name.trim() !== ''
               ) || [];
@@ -171,6 +236,28 @@ export default function StartupsPage() {
                 </div>
               );
             })}
+
+            {hasMore && !initialLoading && (
+                <div className="pt-4 flex justify-center">
+                    <button 
+                        onClick={handleLoadMore}
+                        disabled={isLoading}
+                        className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-900 rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-px hover:translate-y-px hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="animate-spin" size={16} />
+                                Loading...
+                            </>
+                        ) : (
+                            <>
+                                <ArrowDownCircle size={16} />
+                                Load More
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
           </div>
 
           <div className="lg:col-span-3 sticky top-4">
